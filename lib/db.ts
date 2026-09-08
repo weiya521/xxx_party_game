@@ -101,7 +101,19 @@ async function getMySQLPool() {
   if (!mysqlPool) {
     try {
       const mysql = await import("mysql2/promise")
-      mysqlPool = mysql.createPool(DATABASE_URL)
+      const url = new URL(DATABASE_URL)
+
+      mysqlPool = mysql.createPool({
+        host: url.hostname,
+        port: Number(url.port || 3306),
+        user: decodeURIComponent(url.username),
+        password: decodeURIComponent(url.password),
+        database: url.pathname.replace(/^\//, ""),
+      
+        ssl: {
+          rejectUnauthorized: false,
+        },
+      })
 
       // 初始化表
       await mysqlPool.execute(`
